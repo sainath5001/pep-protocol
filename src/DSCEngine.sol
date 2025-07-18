@@ -28,7 +28,8 @@ pragma solidity ^0.8.20;
 import {DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-//import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {AggregatorV3Interface} from
+    "lib/chainlink-brownie-contracts/contracts/src/v0.4/interfaces/AggregatorV3Interface.sol";
 
 /*
  * @title DSCEngine
@@ -55,6 +56,9 @@ contract DSCEngine is ReentrancyGuard {
     error DSCEngine_TokenAddressesAndPriceFeedAddressesMustBeSameLength(); // The length of token addresses and price feed addresses must match
     error DSCEngine_NotAllowedToken(); // The token is not allowed in the system
     error DSCEngine_TransferFailed(); // The transfer of tokens failed
+
+    uint256 private constant ADDITIONAL_FEED_PRICISION = 1e10;
+    uint256 private constant PRICISION = 1e18; // 18 decimals for token prices
 
     mapping(address token => address priceFeed) private s_priceFeeds; // Maps token addresses to their price feed addresses
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposits; // Maps user addresses to their collateral deposits
@@ -133,28 +137,28 @@ contract DSCEngine is ReentrancyGuard {
         // Logic to calculate total collateral value, total DSC minted, and health factor
         // This is a placeholder for the actual implementation
         totalDscMinted = s_DSCMinted[user];
-        collateralValueInUsd = getAccountInformation(user);
+        collateralvalueInUsd = getAccountCollateralValue(user);
     }
 
-    function _revertIfHealthFactorIsBroken(address user) private view {
-        (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
-        // Logic to check if the health factor is broken
-        // This is a placeholder for the actual implementation
-        if (collateralValueInUsd < totalDscMinted) {
-            revert("Health factor is broken");
-        }
+    function _healthFactor(address user) private view returns (uint256) {
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation;
     }
+
+    function _revertIfHealthFactorIsBroken(address user) private view {}
 
     //PUBLIC & EXTERNAL VIEW FUNCTIONS
-    function getAccountCollateralValue(address user) public view returns (uint256) {
+    function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUsd) {
         for (uint256 i = 0; i < s_collateralTokens.length; i++) {
             address token = s_collateralTokens[i];
             uint256 amount = s_collateralDeposits[user][token];
-            if (amount > 0) {
-                // Assuming getCollateralValueInUsd is a function that returns the value of the collateral in USD
-                uint256 valueInUsd = getCollateralValueInUsd(token, amount);
-                return valueInUsd;
-            }
+            totalCollateralValueInUsd += getUsdValue(token, amount);
         }
+        return totalCollateralValueInUsd;
+    }
+
+    function getUsdValue(address token, uint256 amount) public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.latestRoundData();
+        return ((uint256(price) * ADDITIONAL_FEED_PRICISION) * amount) / PRICISION;
     }
 }
