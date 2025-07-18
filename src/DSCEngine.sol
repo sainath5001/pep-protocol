@@ -118,7 +118,7 @@ contract DSCEngine is ReentrancyGuard {
 
     function mintDsc(uint256 amountDscToMint) external moreThanZero(amountDscToMint) nonReentrant {
         s_dscMinted[msg.sender] += amountDscToMint;
-        revertIfHealthFactorIsBroken(msg.sender);
+        _revertIfHealthFactorIsBroken(msg.sender);
     }
 
     function burnDsc() external {}
@@ -136,12 +136,14 @@ contract DSCEngine is ReentrancyGuard {
     {
         // Logic to calculate total collateral value, total DSC minted, and health factor
         // This is a placeholder for the actual implementation
-        totalDscMinted = s_DSCMinted[user];
-        collateralvalueInUsd = getAccountCollateralValue(user);
+        totalDscMinted = s_dscMinted[user];
+
+        collateralValueInUsd = getAccountCollateralValue(user);
     }
 
     function _healthFactor(address user) private view returns (uint256) {
-        (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation;
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
+        // return _calculateHealthFactor(totalDscMinted, collateralValueInUsd);
     }
 
     function _revertIfHealthFactorIsBroken(address user) private view {}
