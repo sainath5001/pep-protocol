@@ -56,9 +56,13 @@ contract DSCEngine is ReentrancyGuard {
     error DSCEngine_TokenAddressesAndPriceFeedAddressesMustBeSameLength(); // The length of token addresses and price feed addresses must match
     error DSCEngine_NotAllowedToken(); // The token is not allowed in the system
     error DSCEngine_TransferFailed(); // The transfer of tokens failed
+    error DSCEngine_BreaksHealthFactor(uint256 healthFactor);
 
     uint256 private constant ADDITIONAL_FEED_PRICISION = 1e10;
     uint256 private constant PRICISION = 1e18; // 18 decimals for token prices
+    uint256 private constant LIQUIDATION_THRESHOLD = 50; // 200% collateralized might be 150%
+    uint256 private constant LIQUIDATION_PRECISION = 100; // Used for percentage calculations
+    uint256 private constant MIN_HEALTH_FACTOR = 1; // Health factor must be greater than or equal to 1
 
     mapping(address token => address priceFeed) private s_priceFeeds; // Maps token addresses to their price feed addresses
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposits; // Maps user addresses to their collateral deposits
@@ -143,10 +147,17 @@ contract DSCEngine is ReentrancyGuard {
 
     function _healthFactor(address user) private view returns (uint256) {
         (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
-        // return _calculateHealthFactor(totalDscMinted, collateralValueInUsd);
+        uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
+        //return (collateralValueInUsd / totalDscMinted);
+        return (collateralAdjustedForThreshold * PRICISION) / totalDscMinted;
     }
 
-    function _revertIfHealthFactorIsBroken(address user) private view {}
+    function _revertIfHealthFactorIsBroken(address user) private view {
+        uint256 userHealthFactor = _healthFactor(user);
+        if (userHealthFactor < MIN_HEALTH_FACTOR) {
+            revert DSCEngine_BreaksHealthFactor(userHealthFactor);
+        }
+    }
 
     //PUBLIC & EXTERNAL VIEW FUNCTIONS
     function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUsd) {
