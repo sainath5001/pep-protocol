@@ -128,7 +128,6 @@ contract DSCEngine is ReentrancyGuard {
         if (!minted) {
             revert DSCEngine_MintFailed();
         }
-
     }
 
     function burnDsc() external {}
