@@ -6,7 +6,7 @@ import {Script} from "forge-std/Script.sol";
 import {MockV3Aggregator} from "../test/mocks/MockV3Aggregator.sol";
 import {ERC20Mock} from "../test/mocks/ERC20Mock.sol";
 
-contract HelperComfig is Script {
+contract HelperConfig is Script {
     struct NetworkConfig {
         address wethUsdPriceFeed;
         address wbtcUsdPriceFeed;
@@ -52,7 +52,6 @@ contract HelperComfig is Script {
         MockV3Aggregator wethUsdPriceFeed = new MockV3Aggregator(DECIMALS, ETH_USD_PRICE);
 
         ERC20Mock wethMock = new ERC20Mock("WETH", "WETH", msg.sender, 1000e18);
-        vm.stopBroadcast();
 
         MockV3Aggregator wbtcUsdPriceFeed = new MockV3Aggregator(DECIMALS, BTC_USD_PRICE);
 
