@@ -193,4 +193,51 @@ contract DSCEngineTest is Test {
         uint256 total = dsce.getCollateralBalanceOfUser(USER, weth); // Or access mapping if public
         assertEq(total, deposit1 + deposit2);
     }
+
+    function testRedeemCollateralSuccess() public {
+        uint256 mintAmount = 100e18;
+        uint256 depositAmount = 200e18;
+        deal(address(weth), USER, depositAmount);
+
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), depositAmount);
+        dsce.depositCollateralAndMintDsc(weth, depositAmount, mintAmount);
+
+        dsc.approve(address(dsce), mintAmount); // <- Fixed this line
+        dsce.redeemCollateralForDsc(weth, 50e18, 50e18);
+        vm.stopPrank();
+
+        uint256 userWethBalance = ERC20Mock(weth).balanceOf(USER);
+        assertEq(userWethBalance, 50e18);
+    }
+
+    function testRedeemFailsIfNotEnoughDsc() public {
+        uint256 depositAmount = 100e18;
+        deal(address(weth), USER, depositAmount);
+
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), depositAmount);
+        dsce.depositCollateral(weth, depositAmount);
+
+        vm.expectRevert(); // Depends on how burnDsc handles insufficient balance
+        dsce.redeemCollateralForDsc(weth, 10e18, 10e18);
+        vm.stopPrank();
+    }
+
+    function testRedeemFailsIfCollateralTooHigh() public {
+        uint256 depositAmount = 50e18;
+        uint256 mintAmount = 30e18;
+
+        deal(address(weth), USER, depositAmount);
+
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), depositAmount);
+        dsce.depositCollateralAndMintDsc(weth, depositAmount, mintAmount);
+
+        dsc.approve(address(dsce), mintAmount); // ✅ FIXED here
+
+        vm.expectRevert(); // This should match your revert message if specific
+        dsce.redeemCollateralForDsc(weth, 60e18, 30e18);
+        vm.stopPrank();
+    }
 }
