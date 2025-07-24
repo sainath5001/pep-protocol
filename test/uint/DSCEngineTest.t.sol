@@ -94,4 +94,103 @@ contract DSCEngineTest is Test {
         assertEq(totalDscMinted, expectedTotalDscMinted, "Total DSC minted should be zero initially");
         assertEq(AMOUNT_COLLATERAL, expectedDepositAmount, "Collateral value in USD should match the deposited amount");
     }
+
+    function testCanDepositCollateralAndMintDsc() public {
+        uint256 mintAmount = 5 ether;
+
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateralAndMintDsc(weth, AMOUNT_COLLATERAL, mintAmount);
+        vm.stopPrank();
+
+        // Check the DSC balance
+        uint256 userDscBalance = dsc.balanceOf(USER);
+        assertEq(userDscBalance, mintAmount);
+
+        // Check internal accounting
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(USER);
+        assertEq(totalDscMinted, mintAmount);
+        assertGt(collateralValueInUsd, 0);
+    }
+
+    function testRevertsWhenNotApproved() public {
+        uint256 mintAmount = 5 ether;
+
+        vm.startPrank(USER);
+        // Not approving the token
+        vm.expectRevert(); // You can specify the expected error if known
+        dsce.depositCollateralAndMintDsc(weth, AMOUNT_COLLATERAL, mintAmount);
+        vm.stopPrank();
+    }
+
+    function testRevertsWhenCollateralZeroAndMintZero() public {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), 0);
+        vm.expectRevert(DSCEngine.DSCEngine_NeedsMoreThanZero.selector);
+        dsce.depositCollateralAndMintDsc(weth, 0, 0);
+        vm.stopPrank();
+    }
+
+    //     function testCanDepositCollateralSuccessfully() public {
+    //     vm.startPrank(USER);
+    //     ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+
+    //     vm.expectEmit(true, true, true, true);
+    //     emit CollateralDeposited(USER, weth, AMOUNT_COLLATERAL); // ✅ NO DSCEngine. prefix
+
+    //     dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
+    //     vm.stopPrank();
+
+    //     uint256 deposited = dsce.getCollateralBalanceOfUser(USER, weth);
+    //     assertEq(deposited, AMOUNT_COLLATERAL);
+    // }
+
+    function testRevertsIfCollateralAmountIsZero() public {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), 0);
+
+        vm.expectRevert(DSCEngine.DSCEngine_NeedsMoreThanZero.selector);
+        dsce.depositCollateral(weth, 0);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfCollateralTokenIsNotAllowed() public {
+        ERC20Mock ranToken = new ERC20Mock("Random", "RDM", USER, AMOUNT_COLLATERAL);
+
+        vm.startPrank(USER);
+        ranToken.approve(address(dsce), AMOUNT_COLLATERAL);
+
+        vm.expectRevert(DSCEngine.DSCEngine_NotAllowedToken.selector);
+        dsce.depositCollateral(address(ranToken), AMOUNT_COLLATERAL);
+        vm.stopPrank();
+    }
+
+    // function testRevertsIfTransferFails() public {
+    //     ERC20Mock badToken = new ERC20Mock("BadToken", "BAD", address(this), 0); // no balance
+
+    //     // Add to allowed tokens (if your contract supports it)
+    //     vm.prank(USER); // impersonate owner if needed
+    //     dsce.addAllowedToken(address(badToken));
+
+    //     vm.startPrank(USER);
+    //     badToken.approve(address(dsce), AMOUNT_COLLATERAL);
+
+    //     vm.expectRevert(DSCEngine.DSCEngine_TransferFailed.selector);
+    //     dsce.depositCollateral(address(badToken), AMOUNT_COLLATERAL);
+    //     vm.stopPrank();
+    // }
+
+    function testMultipleDepositsAccumulate() public {
+        uint256 deposit1 = 2 ether;
+        uint256 deposit2 = 3 ether;
+
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit1 + deposit2);
+        dsce.depositCollateral(weth, deposit1);
+        dsce.depositCollateral(weth, deposit2);
+        vm.stopPrank();
+
+        uint256 total = dsce.getCollateralBalanceOfUser(USER, weth); // Or access mapping if public
+        assertEq(total, deposit1 + deposit2);
+    }
 }
