@@ -62,6 +62,7 @@ contract DSCEngine is ReentrancyGuard {
     error DSCEngine_MintFailed(); // Minting DSC failed
     error DSCEngine_HealthFactorOk(); // Health factor is okay, no action needed
     error DSCEngine_HealthFactorNotImproved(); // Health factor did not improve after liquidation
+    error DSCEngine_BurnFailed(); // Burning DSC failed
 
     uint256 private constant ADDITIONAL_FEED_PRICISION = 1e10;
     uint256 private constant PRICISION = 1e18; // 18 decimals for token prices
@@ -187,7 +188,7 @@ contract DSCEngine is ReentrancyGuard {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
-    function getHealthFactor() external view {}
+    function getHealthFactor() external view returns (uint256) {}
 
     //PRIVATE & INTERNAL VIEW FUNCTIONS
 
@@ -224,7 +225,7 @@ contract DSCEngine is ReentrancyGuard {
         collateralValueInUsd = getAccountCollateralValue(user);
     }
 
-    function _healthFactor(address user) private view returns (uint256) {
+    function _healthFactor(address user) public view returns (uint256) {
         (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
         uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
         //return (collateralValueInUsd / totalDscMinted);
@@ -271,5 +272,29 @@ contract DSCEngine is ReentrancyGuard {
 
     function getCollateralBalanceOfUser(address user, address token) external view returns (uint256) {
         return s_collateralDeposits[user][token];
+    }
+
+    function getDscMintedByUser(address user) external view returns (uint256) {
+        return s_dscMinted[user];
+    }
+
+    function getPriceFeedAddress(address token) external view returns (address) {
+        return s_priceFeeds[token];
+    }
+
+    function getCollateralTokens() external view returns (address[] memory) {
+        return s_collateralTokens;
+    }
+
+    function getDscAddress() external view returns (address) {
+        return address(i_dsc);
+    }
+
+    function getPriceFeedForToken(address token) external view returns (address) {
+        return s_priceFeeds[token];
+    }
+
+    function getDscMinted(address user) external view returns (uint256) {
+        return s_dscMinted[user];
     }
 }
