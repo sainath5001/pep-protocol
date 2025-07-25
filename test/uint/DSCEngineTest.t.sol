@@ -14,6 +14,7 @@ import {console} from "forge-std/console.sol";
 contract DSCEngineTest is Test {
     DeployDSC deployer;
     DecentralizedStableCoin dsc;
+    DSCEngine public dscEngine;
     DSCEngine dsce;
     HelperConfig config;
     address ethUsdPriceFeed;
@@ -633,6 +634,19 @@ contract DSCEngineTest is Test {
 
         vm.expectRevert(); // TransferFrom would fail or _burn would revert
         dsce.burnDsc(mint + 1 ether);
+        vm.stopPrank();
+    }
+
+    function testGetCollateralBalanceOfUser() public {
+        uint256 deposit = 10 ether;
+
+        deal(address(weth), USER, deposit);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit);
+        dsce.depositCollateral(address(weth), deposit);
+
+        uint256 userCollateralBalance = dsce.getCollateralBalanceOfUser(USER, address(weth));
+        assertEq(userCollateralBalance, deposit, "Collateral balance should match deposited amount");
         vm.stopPrank();
     }
 }
