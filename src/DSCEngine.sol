@@ -297,4 +297,8 @@ contract DSCEngine is ReentrancyGuard {
     function getDscMinted(address user) external view returns (uint256) {
         return s_dscMinted[user];
     }
+
+    function getHealthFactor(address user) external view returns (uint256) {
+        return _healthFactor(user);
+    }
 }
