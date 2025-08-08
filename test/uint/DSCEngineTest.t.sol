@@ -649,4 +649,19 @@ contract DSCEngineTest is Test {
         assertEq(userCollateralBalance, deposit, "Collateral balance should match deposited amount");
         vm.stopPrank();
     }
+
+    function testGetDscMinted() public {
+        uint256 deposit = 10 ether;
+        uint256 mint = 5 ether;
+
+        deal(address(weth), USER, deposit);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit);
+        dsce.depositCollateral(address(weth), deposit);
+        dsce.mintDsc(mint);
+
+        uint256 userMinted = dsce.getDscMinted(USER);
+        assertEq(userMinted, mint, "DSC minted should match mint amount");
+        vm.stopPrank();
+    }
 }
