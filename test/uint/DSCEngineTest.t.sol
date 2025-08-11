@@ -606,19 +606,19 @@ contract DSCEngineTest is Test {
     //     assertEq(dsce.getCollateralBalanceOfUser(USER, address(weth)), 0);
     // }
 
-    // function testMintingRevertsIfHealthFactorBreaks() public {
-    //     uint256 deposit = 10 ether;
-    //     uint256 mint = 20 ether; // overcollateralization not maintained
+    function testMintingRevertsIfHealthFactorBreaks() public {
+        uint256 deposit = 10 ether;
+        uint256 mint = 20 ether; // overcollateralization not maintained
 
-    //     deal(address(weth), USER, deposit);
-    //     vm.startPrank(USER);
-    //     ERC20Mock(weth).approve(address(dsce), deposit);
-    //     dsce.depositCollateral(address(weth), deposit);
+        deal(address(weth), USER, deposit);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit);
+        dsce.depositCollateral(address(weth), deposit);
 
-    //     vm.expectRevert(DSCEngine.DSCEngine_BreaksHealthFactor.selector);
-    //     dsce.mintDsc(mint);
-    //     vm.stopPrank();
-    // }
+        vm.expectRevert(DSCEngine.DSCEngine_BreaksHealthFactor.selector);
+        dsce.mintDsc(mint);
+        vm.stopPrank();
+    }
 
     function testBurningMoreThanMintedFails() public {
         uint256 deposit = 10 ether;
