@@ -664,4 +664,32 @@ contract DSCEngineTest is Test {
         assertEq(userMinted, mint, "DSC minted should match mint amount");
         vm.stopPrank();
     }
+
+    function testfuzzingGetUsdValue(uint256 amount) public {
+        // Fuzzing test for getUsdValue
+        uint256 ethPrice = 2000e18; // Assume ETH price is $2000
+        uint256 expectedUsdValue = (amount * ethPrice) / 1e18; // Convert to USD value
+
+        uint256 actualUsdValue = dsce.getUsdValue(weth, amount);
+        assertEq(actualUsdValue, expectedUsdValue, "USD value calculation is incorrect");
+    }
+
+    function testfuzzingLiquidation(uint256 amount) public {
+        // Fuzzing test for liquidation
+        uint256 deposit = 10 ether;
+        uint256 mint = 5 ether;
+
+        deal(address(weth), USER, deposit);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit);
+        dsce.depositCollateral(address(weth), deposit);
+        dsce.mintDsc(mint);
+
+        // Simulate a price drop to trigger liquidation
+        vm.mockCall(ethUsdPriceFeed, abi.encodeWithSignature("latestRoundData()"), abi.encode(1000e18)); // Price drops to $1000
+
+        vm.expectRevert(DSCEngine.DSCEngine_HealthFactorOk.selector);
+        dsce.liquidate(weth, USER, amount);
+        vm.stopPrank();
+    }
 }
