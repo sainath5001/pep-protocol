@@ -305,4 +305,12 @@ contract DSCEngine is ReentrancyGuard {
     function getLiquidationThreshold() external pure returns (uint256) {
         return LIQUIDATION_THRESHOLD;
     }
+
+    function getDscAddress() external view returns (address) {
+        return address(i_dsc);
+    }
+
+    // function getWethAddress() external view returns (address) {
+    //     return s_collateralTokens[0]; // Assuming WETH is the first token in the array
+    // }
 }
