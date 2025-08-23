@@ -692,4 +692,26 @@ contract DSCEngineTest is Test {
         dsce.liquidate(weth, USER, amount);
         vm.stopPrank();
     }
+
+    function testfuzzingBurnRevertsIfFails(uint256 amount) public {
+        // Fuzzing test for burnDsc
+        uint256 deposit = 10 ether;
+        uint256 mint = 5 ether;
+
+        deal(address(weth), USER, deposit);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit);
+        dsce.depositCollateral(address(weth), deposit);
+        dsce.mintDsc(mint);
+
+        dsc.approve(address(dsce), amount);
+
+        if (amount > mint) {
+            vm.expectRevert(); // Expect revert if trying to burn more than minted
+            dsce.burnDsc(amount);
+        } else {
+            dsce.burnDsc(amount); // Should succeed
+        }
+        vm.stopPrank();
+    }
 }
