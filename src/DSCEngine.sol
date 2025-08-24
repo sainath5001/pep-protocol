@@ -313,4 +313,20 @@ contract DSCEngine is ReentrancyGuard {
     // function getWethAddress() external view returns (address) {
     //     return s_collateralTokens[0]; // Assuming WETH is the first token in the array
     // }
+
+    function getWbtcAddress() external view returns (address) {
+        return s_collateralTokens[1]; // Assuming WBTC is the second token in the array
+    }
+
+    function getMinHealthFactor() external pure returns (uint256) {
+        return MIN_HEALTH_FACTOR;
+    }
+
+    function getMaxHealthFactor() external pure returns (uint256) {
+        return MAX_HEALTH_FACTOR;
+    }
+
+    function getLiquidationThreshold() external pure returns (uint256) {
+        return LIQUIDATION_THRESHOLD;
+    }
 }
