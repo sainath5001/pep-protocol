@@ -69,4 +69,12 @@ contract MockV3Aggregator {
     function description() external pure returns (string memory) {
         return "v0.6/tests/MockV3Aggregator.sol";
     }
+
+    function getLatestAnswer() external view returns (int256) {
+        return latestAnswer;
+    }
+
+    function getLatestTimestamp() external view returns (uint256) {
+        return latestTimestamp;
+    }
 }

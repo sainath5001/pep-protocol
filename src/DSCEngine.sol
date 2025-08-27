@@ -345,20 +345,4 @@ contract DSCEngine is ReentrancyGuard {
     function getLiquidationPrecision() external pure returns (uint256) {
         return LIQUIDATION_PRECISION;
     }
-
-    function getLiquidationPrecision() external pure returns (uint256) {
-        return LIQUIDATION_PRECISION;
-    }
-
-    function getLiquidationPrecision() external pure returns (uint256) {
-        return LIQUIDATION_PRECISION;
-    }
-
-    function getLiquidationPrecision() external pure returns (uint256) {
-        return LIQUIDATION_PRECISION;
-    }
-
-    function getLiquidationPrecision() external pure returns (uint256) {
-        return LIQUIDATION_PRECISION;
-    }
 }
