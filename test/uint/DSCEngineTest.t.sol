@@ -714,4 +714,34 @@ contract DSCEngineTest is Test {
         }
         vm.stopPrank();
     }
+
+    function testfuzzingRedeemCollateralRevertsIfFails(uint256 amount) public {
+        // Fuzzing test for redeemCollateral
+        uint256 deposit = 10 ether;
+        uint256 mint = 5 ether;
+
+        deal(address(weth), USER, deposit);
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), deposit);
+        dsce.depositCollateral(address(weth), deposit);
+        dsce.mintDsc(mint);
+
+        if (amount > deposit) {
+            vm.expectRevert(); // Expect revert if trying to redeem more than deposited
+            dsce.redeemCollateral(address(weth), amount);
+        } else {
+            dsce.redeemCollateral(address(weth), amount); // Should succeed
+        }
+        vm.stopPrank();
+    }
+
+    function testfuzzingDepositCollateralRevertsIfFails(uint256 amount) public {
+        // Fuzzing test for depositCollateral
+        if (amount == 0) {
+            vm.expectRevert(DSCEngine.DSCEngine_NeedsMoreThanZero.selector);
+            dsce.depositCollateral(address(weth), amount);
+        } else {
+            dsce.depositCollateral(address(weth), amount); // Should succeed
+        }
+    }
 }
